@@ -57,8 +57,8 @@ dependencies {
     // Bundle external libs into the final JAR. Each include() emits a JiJ entry
     // so the loader exposes the lib at runtime without classpath conflicts.
     include(implementation("com.squareup.okhttp3:okhttp:$okhttp_version")!!)
-    include(implementation("com.squareup.okio:okio:3.9.1")!!)
-    include(implementation("com.squareup.okio:okio-jvm:3.9.1")!!)
+    include(implementation("com.squareup.okio:okio:3.17.0")!!)
+    include(implementation("com.squareup.okio:okio-jvm:3.17.0")!!)
     include(implementation("org.xerial:sqlite-jdbc:$sqlite_jdbc_version")!!)
     include(implementation("org.tomlj:tomlj:$tomlj_version")!!)
     include(implementation("org.antlr:antlr4-runtime:4.11.1")!!)

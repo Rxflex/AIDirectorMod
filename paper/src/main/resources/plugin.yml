@@ -1,0 +1,19 @@
+name: AIDirector
+version: '${mod_version}'
+main: dev.aidirector.paper.AIDirectorPaperPlugin
+api-version: '1.21'
+load: POSTWORLD
+authors: [AI Director contributors]
+description: LLM-driven Game Director for Paper/Spigot — narrative atmosphere, persistent NPCs, quests, and a context-aware AI that adapts to your world.
+website: https://modrinth.com/plugin/aidirector
+folia-supported: false
+commands:
+  aidirector:
+    description: AI Director admin commands
+    usage: /aidirector <status|pause|resume|reload|trigger|chronicle>
+    permission: aidirector.admin
+    permission-message: You do not have permission to use AI Director admin commands.
+permissions:
+  aidirector.admin:
+    description: Full control of AI Director (status, pause, resume, reload, trigger, chronicle)
+    default: op

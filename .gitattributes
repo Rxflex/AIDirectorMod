@@ -1,0 +1,13 @@
+# Normalize line endings: store text files with LF in the repository.
+* text=auto eol=lf
+
+# Windows batch scripts must keep CRLF.
+*.bat text eol=crlf
+
+# The Gradle wrapper script must stay LF so it runs on Unix and CI.
+gradlew text eol=lf
+
+# Binary files Git must never convert.
+*.jar binary
+*.png binary
+*.zip binary

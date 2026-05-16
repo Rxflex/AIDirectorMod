@@ -2,7 +2,7 @@ plugins {
     id("architectury-plugin") version "3.4-SNAPSHOT"
     id("dev.architectury.loom") version "1.10-SNAPSHOT" apply false
     kotlin("jvm") version "2.0.21" apply false
-    kotlin("plugin.serialization") version "2.0.21" apply false
+    kotlin("plugin.serialization") version "2.3.21" apply false
 }
 
 architectury {

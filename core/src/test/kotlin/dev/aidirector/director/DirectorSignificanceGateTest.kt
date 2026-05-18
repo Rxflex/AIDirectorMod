@@ -173,10 +173,12 @@ class DirectorSignificanceGateTest {
         )
         val guardrails = Guardrails(cfg.guardrails, clock)
         val tools = ToolRegistry(listOf(SendNarrationTool()))
+        val phantoms = dev.aidirector.phantom.PhantomRegistry()
         val agentLoop = AgentLoop(
             llm = llm, tools = tools, guardrails = guardrails,
             memory = memory, rag = rag,
             narrationDedup = dev.aidirector.dedup.NarrationDedup(),
+            phantoms = phantoms,
             maxIterations = cfg.director.maxAgentIterations,
             maxToolCallsPerIteration = cfg.director.maxToolCallsPerIteration,
         )
@@ -187,6 +189,7 @@ class DirectorSignificanceGateTest {
             rag = rag,
             agentLoop = agentLoop,
             campaignStore = dev.aidirector.campaign.CampaignStore(memory.worldState),
+            phantoms = phantoms,
             clock = clock,
         )
     }

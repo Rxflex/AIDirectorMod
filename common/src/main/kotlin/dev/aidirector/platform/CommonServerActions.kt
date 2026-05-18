@@ -30,6 +30,8 @@ import net.minecraft.core.particles.ParticleOptions
 import net.minecraft.core.particles.SimpleParticleType
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.network.chat.Component
+import net.minecraft.network.protocol.game.ClientboundPlayerInfoRemovePacket
+import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket
 import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket
 import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket
@@ -687,6 +689,105 @@ class CommonServerActions(
             entity.discard()
         }
         return ActionOutcome.Success("Removed entity $entityUuid")
+    }
+
+    // ---- Phantom player -------------------------------------------------
+
+    override fun phantomJoin(phantomUuid: UUID, name: String): ActionOutcome {
+        val server = server() ?: return ActionOutcome.Failure("Server unavailable")
+        server.execute {
+            // The tab-list packet is version-fragile — best-effort, never fatal.
+            runCatching { sendPhantomTabList(server, phantomUuid, name, add = true) }
+                .onFailure { AIDirector.log.warn("Phantom tab-list add failed: ${it.message}") }
+            server.playerList.broadcastSystemMessage(
+                Component.translatable("multiplayer.player.joined", name).withStyle(ChatFormatting.YELLOW),
+                false,
+            )
+        }
+        return ActionOutcome.Success("Phantom '$name' joined")
+    }
+
+    override fun phantomSay(name: String, message: String): ActionOutcome {
+        val server = server() ?: return ActionOutcome.Failure("Server unavailable")
+        server.execute {
+            server.playerList.broadcastSystemMessage(
+                Component.literal("<$name> ").append(Component.literal(message)),
+                false,
+            )
+        }
+        return ActionOutcome.Success("Phantom '$name' spoke")
+    }
+
+    override fun phantomLeave(phantomUuid: UUID, name: String): ActionOutcome {
+        val server = server() ?: return ActionOutcome.Failure("Server unavailable")
+        server.execute {
+            runCatching { sendPhantomTabList(server, phantomUuid, name, add = false) }
+                .onFailure { AIDirector.log.warn("Phantom tab-list remove failed: ${it.message}") }
+            server.playerList.broadcastSystemMessage(
+                Component.translatable("multiplayer.player.left", name).withStyle(ChatFormatting.YELLOW),
+                false,
+            )
+        }
+        return ActionOutcome.Success("Phantom '$name' left")
+    }
+
+    /**
+     * Sends a [ClientboundPlayerInfoUpdatePacket] (add) or
+     * [ClientboundPlayerInfoRemovePacket] (remove) for a fake player.
+     *
+     * The packet's nested `Entry` record gained fields across 1.21.x
+     * (`listOrder`, `showHat`), so it is built reflectively by filling the
+     * highest-arity constructor by parameter type. The caller wraps this in
+     * runCatching — if it ever fails, the phantom still works as a chat
+     * presence (join / say / leave messages), just without the tab-list row.
+     */
+    private fun sendPhantomTabList(
+        server: MinecraftServer,
+        uuid: UUID,
+        name: String,
+        add: Boolean,
+    ) {
+        val players = server.playerList.players
+        if (players.isEmpty()) return
+        val packet: Any = if (add) {
+            val profile = com.mojang.authlib.GameProfile(uuid, name)
+            val entry = buildPhantomEntry(uuid, profile)
+            val actions = java.util.EnumSet.of(
+                ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER,
+                ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED,
+            )
+            val pkt = ClientboundPlayerInfoUpdatePacket(actions, emptyList())
+            val entriesField = ClientboundPlayerInfoUpdatePacket::class.java.declaredFields
+                .first { java.util.List::class.java.isAssignableFrom(it.type) }
+            entriesField.isAccessible = true
+            entriesField.set(pkt, listOf(entry))
+            pkt
+        } else {
+            ClientboundPlayerInfoRemovePacket(listOf(uuid))
+        }
+        players.forEach { it.connection.send(packet as net.minecraft.network.protocol.Packet<*>) }
+    }
+
+    /** Reflectively constructs `ClientboundPlayerInfoUpdatePacket.Entry`, version-tolerant. */
+    private fun buildPhantomEntry(uuid: UUID, profile: com.mojang.authlib.GameProfile): Any {
+        val entryClass = Class.forName(
+            "net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket\$Entry",
+        )
+        val ctor = entryClass.declaredConstructors.maxByOrNull { it.parameterCount }!!
+        ctor.isAccessible = true
+        val args = ctor.parameterTypes.map { t ->
+            when {
+                t == UUID::class.java -> uuid
+                com.mojang.authlib.GameProfile::class.java.isAssignableFrom(t) -> profile
+                t == java.lang.Boolean.TYPE -> true
+                t == Integer.TYPE -> 0
+                t.isEnum -> t.enumConstants.let { c ->
+                    c.firstOrNull { (it as Enum<*>).name == "SURVIVAL" } ?: c.first()
+                }
+                else -> null
+            }
+        }.toTypedArray()
+        return ctor.newInstance(*args)
     }
 
     // ---- Registry checks -----------------------------------------------

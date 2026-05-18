@@ -449,6 +449,39 @@ class PaperServerActions(private val plugin: JavaPlugin) : ServerActions {
         return ActionOutcome.Success("Removed entity")
     }
 
+    // ----- Phantom player -----
+    // The Bukkit API has no clean way to inject a fake tab-list entry without
+    // NMS or a packet library, so the Paper phantom is a chat presence: a
+    // believable join message, spoken lines, and a leave message.
+
+    override fun phantomJoin(phantomUuid: UUID, name: String): ActionOutcome {
+        runSync {
+            server.broadcast(
+                Component.text("$name joined the game", NamedTextColor.YELLOW),
+            )
+        }
+        return ActionOutcome.Success("Phantom '$name' joined")
+    }
+
+    override fun phantomSay(name: String, message: String): ActionOutcome {
+        runSync {
+            server.broadcast(
+                Component.text("<$name> ", NamedTextColor.WHITE)
+                    .append(Component.text(message, NamedTextColor.WHITE)),
+            )
+        }
+        return ActionOutcome.Success("Phantom '$name' spoke")
+    }
+
+    override fun phantomLeave(phantomUuid: UUID, name: String): ActionOutcome {
+        runSync {
+            server.broadcast(
+                Component.text("$name left the game", NamedTextColor.YELLOW),
+            )
+        }
+        return ActionOutcome.Success("Phantom '$name' left")
+    }
+
     // ----- Registry checks via Bukkit/Material -----
 
     override fun isItemRegistered(itemId: String): Boolean = materialFromId(itemId) != null

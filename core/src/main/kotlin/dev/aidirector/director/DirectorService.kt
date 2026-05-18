@@ -26,6 +26,9 @@ import dev.aidirector.tools.impl.GiveTreasureMapTool
 import dev.aidirector.tools.impl.GrantAdvancementTool
 import dev.aidirector.tools.impl.KillMobTool
 import dev.aidirector.tools.impl.ModifyWeatherTool
+import dev.aidirector.tools.impl.PhantomJoinTool
+import dev.aidirector.tools.impl.PhantomLeaveTool
+import dev.aidirector.tools.impl.PhantomSayTool
 import dev.aidirector.tools.impl.PlaceBlockTool
 import dev.aidirector.tools.impl.PlaceSignTool
 import dev.aidirector.tools.impl.PlaySoundTool
@@ -251,6 +254,7 @@ class DirectorService private constructor(
             )
             val guardrails = Guardrails(cfg.guardrails, clock)
             val narrationDedup = dev.aidirector.dedup.NarrationDedup()
+            val phantoms = dev.aidirector.phantom.PhantomRegistry()
             val campaignStore = dev.aidirector.campaign.CampaignStore(memory.worldState)
             val tools = ToolRegistry(buildToolList(cfg.director.allowDestructiveTools, configService))
             val agentLoop = AgentLoop(
@@ -260,6 +264,7 @@ class DirectorService private constructor(
                 memory = memory,
                 rag = rag,
                 narrationDedup = narrationDedup,
+                phantoms = phantoms,
                 maxIterations = cfg.director.maxAgentIterations,
                 maxToolCallsPerIteration = cfg.director.maxToolCallsPerIteration,
             )
@@ -270,6 +275,7 @@ class DirectorService private constructor(
                 rag = rag,
                 agentLoop = agentLoop,
                 campaignStore = campaignStore,
+                phantoms = phantoms,
                 clock = clock,
             )
             val showrunner = dev.aidirector.campaign.Showrunner(
@@ -342,6 +348,10 @@ class DirectorService private constructor(
                 // destructive-tools opt-in.
                 PlaceSignTool(),
                 BuildStructureTool(),
+                // Phantom player — tab-list + chat presence, no world entity.
+                PhantomJoinTool(),
+                PhantomSayTool(),
+                PhantomLeaveTool(),
             )
             if (allowDestructive) {
                 safe += SetTimeTool()

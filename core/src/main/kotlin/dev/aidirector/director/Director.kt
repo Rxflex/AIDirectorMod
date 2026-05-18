@@ -40,6 +40,7 @@ class Director(
     private val rag: Rag,
     private val agentLoop: AgentLoop,
     private val campaignStore: dev.aidirector.campaign.CampaignStore,
+    private val phantoms: dev.aidirector.phantom.PhantomRegistry,
     private val clock: Clock = Clock.System,
     private val promptBuilder: PromptBuilder = PromptBuilder(
         systemPromptOverride = configService.current.director.systemPromptOverride,
@@ -173,6 +174,7 @@ class Director(
                 narrativeArc = arc,
                 retrievedFacts = retrieved,
                 campaign = campaign,
+                phantoms = phantoms.all(),
                 nowMs = now,
             ),
         )

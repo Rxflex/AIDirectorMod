@@ -198,6 +198,7 @@ class DirectorTest {
                 ModifyWeatherTool(),
             ),
         )
+        val phantoms = dev.aidirector.phantom.PhantomRegistry()
         val agentLoop = AgentLoop(
             llm = llm,
             tools = tools,
@@ -205,6 +206,7 @@ class DirectorTest {
             memory = memory,
             rag = rag,
             narrationDedup = dev.aidirector.dedup.NarrationDedup(),
+            phantoms = phantoms,
             maxIterations = cfg.director.maxAgentIterations,
             maxToolCallsPerIteration = cfg.director.maxToolCallsPerIteration,
         )
@@ -215,6 +217,7 @@ class DirectorTest {
             rag = rag,
             agentLoop = agentLoop,
             campaignStore = dev.aidirector.campaign.CampaignStore(memory.worldState),
+            phantoms = phantoms,
             clock = clock,
         )
     }

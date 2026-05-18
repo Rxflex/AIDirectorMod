@@ -63,6 +63,8 @@ data class ToolContext(
     val memory: dev.aidirector.memory.Memory,
     val rag: dev.aidirector.rag.Rag,
     val narrationDedup: dev.aidirector.dedup.NarrationDedup,
+    /** Live phantom players in the tab list — the phantom tools keep this in sync. */
+    val phantoms: dev.aidirector.phantom.PhantomRegistry = dev.aidirector.phantom.PhantomRegistry(),
     /** If non-null, the agent loop is currently running inside an NPC dialogue. */
     val activeNpcId: String? = null,
 )

@@ -51,7 +51,7 @@ class PromptBuilder(
         val recentEventsBlock = "$directorActions\n\n${renderRecentEvents(input.recentEvents, input.nowMs)}"
         val sections = ContextBudget.Sections(
             systemPrompt = system,
-            playerStateBlock = renderState(input.snapshot),
+            playerStateBlock = renderState(input.snapshot) + renderPhantoms(input.phantoms),
             tensionBlock = renderTension(input.tensionScore),
             campaignBlock = input.campaign?.let { renderCampaign(it) },
             narrativeArc = input.narrativeArc?.let { renderArc(it) },
@@ -133,6 +133,14 @@ class PromptBuilder(
                 future.joinToString(" → ") { PromptSafety.sanitize(it.title, 60) })
         }
     }.trim()
+
+    private fun renderPhantoms(phantoms: List<dev.aidirector.phantom.Phantom>): String {
+        if (phantoms.isEmpty()) return ""
+        val lines = phantoms.joinToString("\n") {
+            "- ${PromptSafety.sanitize(it.name, 16)} (in the tab list; no body in the world)"
+        }
+        return "\n\n# Active phantoms\n$lines"
+    }
 
     private fun renderActiveNpcs(npcs: List<NpcRecord>): String {
         if (npcs.isEmpty()) return "# NPC roster\n(none)"
@@ -338,6 +346,13 @@ class PromptBuilder(
                 note. Move them with evolve_npc when the story earns it; a
                 fallen NPC gets a grave via build_structure. Never narrate a
                 dead or missing NPC as present.
+            21. PHANTOM PLAYERS. For dread you may add a phantom player:
+                phantom_join puts an unknown name in the tab list with a real
+                join message, phantom_say gives it one wrong line, phantom_leave
+                removes it. There is no body in the world — it is pure unease.
+                Use it rarely, and always let a phantom leave; one that lingers
+                loses its edge. Active phantoms are listed under
+                # Active phantoms.
         """.trimIndent()
     }
 }
@@ -351,5 +366,6 @@ data class PromptInput(
     val narrativeArc: String?,
     val retrievedFacts: List<ScoredFact>,
     val campaign: dev.aidirector.campaign.CampaignState?,
+    val phantoms: List<dev.aidirector.phantom.Phantom> = emptyList(),
     val nowMs: Long,
 )

@@ -123,6 +123,19 @@ interface ServerActions {
     fun setMobTarget(entityUuid: UUID, targetPlayer: UUID): ActionOutcome
     fun killEntity(entityUuid: UUID): ActionOutcome
 
+    // ---- Phantom player -------------------------------------------------
+    // A fake player that exists only in the tab list and chat — no entity in
+    // the world. Server-side; clients install nothing. Built for horror.
+
+    /** Adds [name] to every online player's tab list and broadcasts a join message. */
+    fun phantomJoin(phantomUuid: UUID, name: String): ActionOutcome
+
+    /** Broadcasts a chat line attributed to the phantom: `<name> message`. */
+    fun phantomSay(name: String, message: String): ActionOutcome
+
+    /** Removes the phantom from the tab list and broadcasts a leave message. */
+    fun phantomLeave(phantomUuid: UUID, name: String): ActionOutcome
+
     // ---- Registry checks -----------------------------------------------
 
     fun isItemRegistered(itemId: String): Boolean

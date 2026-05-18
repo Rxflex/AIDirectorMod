@@ -44,6 +44,7 @@ class AgentLoop(
     private val memory: Memory,
     private val rag: Rag,
     private val narrationDedup: dev.aidirector.dedup.NarrationDedup,
+    private val phantoms: dev.aidirector.phantom.PhantomRegistry,
     private val maxIterations: Int,
     private val maxToolCallsPerIteration: Int,
 ) {
@@ -173,7 +174,7 @@ class AgentLoop(
             GuardrailDecision.Allowed -> Unit
             is GuardrailDecision.Denied -> return ToolResult.Refused("Guardrail: ${g.reason}")
         }
-        val ctx = ToolContext(playerUuid, nowMs, memory, rag, narrationDedup)
+        val ctx = ToolContext(playerUuid, nowMs, memory, rag, narrationDedup, phantoms)
         return try {
             executeChecked(tool, call.function.arguments, ctx)
         } catch (e: ToolArgumentException) {

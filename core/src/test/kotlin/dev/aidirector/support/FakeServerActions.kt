@@ -45,6 +45,9 @@ class FakeServerActions(
         data class SignPlace(val dimensionId: String, val lines: List<String>) : Call
         data class TreasureMap(val player: UUID, val targetX: Int, val targetZ: Int, val label: String) : Call
         data class Structure(val dimensionId: String, val blockCount: Int) : Call
+        data class PhantomJoin(val name: String) : Call
+        data class PhantomSay(val name: String, val message: String) : Call
+        data class PhantomLeave(val name: String) : Call
     }
 
     override fun isPlayerOnline(playerUuid: UUID): Boolean = true
@@ -180,6 +183,21 @@ class FakeServerActions(
 
     override fun killEntity(entityUuid: UUID): ActionOutcome {
         calls += Call.EntityKill(entityUuid)
+        return ActionOutcome.Success("ok")
+    }
+
+    override fun phantomJoin(phantomUuid: UUID, name: String): ActionOutcome {
+        calls += Call.PhantomJoin(name)
+        return ActionOutcome.Success("ok")
+    }
+
+    override fun phantomSay(name: String, message: String): ActionOutcome {
+        calls += Call.PhantomSay(name, message)
+        return ActionOutcome.Success("ok")
+    }
+
+    override fun phantomLeave(phantomUuid: UUID, name: String): ActionOutcome {
+        calls += Call.PhantomLeave(name)
         return ActionOutcome.Success("ok")
     }
 

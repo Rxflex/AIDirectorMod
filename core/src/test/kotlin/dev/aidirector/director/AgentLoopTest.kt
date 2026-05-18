@@ -134,6 +134,7 @@ class AgentLoopTest {
             llm = llm, tools = tools, guardrails = guardrails,
             memory = memory, rag = rag,
             narrationDedup = dev.aidirector.dedup.NarrationDedup(),
+            phantoms = dev.aidirector.phantom.PhantomRegistry(),
             maxIterations = maxIterations, maxToolCallsPerIteration = 3,
         )
     }

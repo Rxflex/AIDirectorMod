@@ -421,6 +421,7 @@ class LiveDirectorDemo {
                 llm = llm, tools = tools, guardrails = guardrails,
                 memory = memory, rag = rag,
                 narrationDedup = dev.aidirector.dedup.NarrationDedup(),
+                phantoms = dev.aidirector.phantom.PhantomRegistry(),
                 maxIterations = 3, maxToolCallsPerIteration = 3,
             )
 
@@ -549,6 +550,21 @@ private class PermissiveActions : ServerActions {
     }
     override fun killEntity(entityUuid: UUID): ActionOutcome {
         calls += "kill_entity: $entityUuid"
+        return ActionOutcome.Success("ok")
+    }
+
+    override fun phantomJoin(phantomUuid: UUID, name: String): ActionOutcome {
+        calls += "phantom_join: $name"
+        return ActionOutcome.Success("ok")
+    }
+
+    override fun phantomSay(name: String, message: String): ActionOutcome {
+        calls += "phantom_say: $name: $message"
+        return ActionOutcome.Success("ok")
+    }
+
+    override fun phantomLeave(phantomUuid: UUID, name: String): ActionOutcome {
+        calls += "phantom_leave: $name"
         return ActionOutcome.Success("ok")
     }
 

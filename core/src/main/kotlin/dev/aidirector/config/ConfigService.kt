@@ -23,13 +23,17 @@ class ConfigService(private val configDir: Path) {
      * operator the path. On any other failure, leaves the previous config in
      * place and rethrows.
      */
+    /** The file [load] reads — surfaced so operators can confirm WHICH file is live. */
+    val configFile: Path get() = configDir.resolve(DirectorConfig.FILE_NAME)
+
     @Throws(ConfigParseException::class, ConfigNotInitializedException::class)
     fun load(): DirectorConfig {
         val loaded = ConfigLoader.load(configDir)
         ref.set(loaded)
         AIDirector.log.info(
-            "Loaded AI Director config: model=${loaded.llm.model} " +
-                "tick=${loaded.director.tickIntervalMs}ms enabled=${loaded.director.enabled}",
+            "Loaded AI Director config from ${configFile.toAbsolutePath()} " +
+                "(model=${loaded.llm.model}, embed_model=${loaded.llm.embedModel ?: "<default>"}, " +
+                "tick=${loaded.director.tickIntervalMs}ms, enabled=${loaded.director.enabled})",
         )
         return loaded
     }

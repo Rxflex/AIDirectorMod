@@ -6,6 +6,23 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.4] - 2026-05-18
+
+### Fixed
+
+- Request bodies are sent as bare `application/json`. okhttp's
+  `String.toRequestBody` appends `; charset=utf-8`, which a strict
+  endpoint (NVIDIA's embeddings service) rejects with HTTP 415.
+- The chronicle book paginates. A written-book page does not scroll, so
+  a long entry was cut off on page one; entries are now word-wrapped and
+  split across pages, each starting fresh.
+
+### Changed
+
+- The config-load log line reports the absolute path of the
+  `aidirector.toml` actually read, plus the embed model — so editing the
+  wrong copy of the file is obvious from the log.
+
 ## [0.4.3] - 2026-05-18
 
 ### Fixed

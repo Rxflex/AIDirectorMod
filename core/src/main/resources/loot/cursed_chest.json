@@ -1,0 +1,16 @@
+{
+  "name": "Cursed Chest",
+  "rolls_min": 3,
+  "rolls_max": 5,
+  "entries": [
+    { "item": "minecraft:bone", "weight": 12, "min": 1, "max": 5 },
+    { "item": "minecraft:rotten_flesh", "weight": 12, "min": 2, "max": 6 },
+    { "item": "minecraft:soul_torch", "weight": 9, "min": 1, "max": 4 },
+    { "item": "minecraft:gunpowder", "weight": 8, "min": 1, "max": 3 },
+    { "item": "minecraft:spider_eye", "weight": 7, "min": 1, "max": 3 },
+    { "item": "minecraft:coal", "weight": 7, "min": 2, "max": 6 },
+    { "item": "minecraft:ghast_tear", "weight": 3, "min": 1, "max": 1 },
+    { "item": "minecraft:echo_shard", "weight": 2, "min": 1, "max": 2 },
+    { "item": "minecraft:iron_ingot", "weight": 4, "min": 1, "max": 2 }
+  ]
+}

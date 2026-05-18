@@ -23,6 +23,7 @@ import dev.aidirector.tools.impl.DressSceneTool
 import dev.aidirector.tools.impl.EvolveNpcTool
 import dev.aidirector.tools.impl.GiveBookTool
 import dev.aidirector.tools.impl.GiveItemTool
+import dev.aidirector.tools.impl.GiveLootTool
 import dev.aidirector.tools.impl.GiveTreasureMapTool
 import dev.aidirector.tools.impl.GrantAdvancementTool
 import dev.aidirector.tools.impl.KillMobTool
@@ -326,6 +327,7 @@ class DirectorService private constructor(
                 SendNarrationTool(),
                 PlaySoundTool(),
                 GiveItemTool(rarityCapProvider = { cs.current.guardrails.itemRarityCap }),
+                GiveLootTool(),
                 ApplyEffectTool(),
                 ModifyWeatherTool(),
                 SpawnNpcTool(),

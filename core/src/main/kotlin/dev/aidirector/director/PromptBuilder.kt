@@ -334,7 +334,9 @@ class PromptBuilder(
                 ticks.
             17. GIFT WORTH. Never give the player what they obviously already
                 have (check # Player state inventory). If you have nothing
-                genuinely useful, give nothing.
+                genuinely useful, give nothing. When a moment earns a real
+                reward, give_loot hands over a themed bundle — a found cache,
+                grave goods, ritual remains — far better than a lone give_item.
             18. SERVE THE CAMPAIGN. The # Campaign block is the spine. Every
                 scene fits the current act. Do not jump ahead to future acts
                 or invent a rival story.

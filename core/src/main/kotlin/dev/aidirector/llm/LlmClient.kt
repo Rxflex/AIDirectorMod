@@ -37,7 +37,10 @@ class LlmClient(
             .header("Authorization", "Bearer ${config.apiKey}")
             .header("Accept", "application/json")
             .header("User-Agent", "AIDirector/${AIDirector.VERSION}")
-            .post(payload.toRequestBody(JSON_MEDIA_TYPE))
+            // Send the body as bytes with a bare `application/json` type.
+            // String.toRequestBody would append `; charset=utf-8`, which some
+            // strict endpoints reject with HTTP 415.
+            .post(payload.encodeToByteArray().toRequestBody(JSON_MEDIA_TYPE))
             .build()
 
         return executeWithRetry(httpRequest)
@@ -128,7 +131,7 @@ class LlmClient(
     }
 
     companion object {
-        private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
+        private val JSON_MEDIA_TYPE = "application/json".toMediaType()
 
         fun defaultHttpClient(config: LlmConfig): OkHttpClient = OkHttpClient.Builder()
             .connectTimeout(Duration.ofSeconds(10))

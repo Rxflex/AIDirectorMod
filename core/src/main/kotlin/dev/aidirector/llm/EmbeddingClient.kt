@@ -47,7 +47,10 @@ class EmbeddingClient(
             .header("Authorization", "Bearer $apiKey")
             .header("Accept", "application/json")
             .header("User-Agent", "AIDirector/${AIDirector.VERSION}")
-            .post(DirectorJson.encodeToString(req).toRequestBody(JSON_MEDIA_TYPE))
+            // Bytes + bare `application/json` — String.toRequestBody would
+            // append `; charset=utf-8`, which the embeddings endpoint rejects
+            // with HTTP 415 "Unsupported media type".
+            .post(DirectorJson.encodeToString(req).encodeToByteArray().toRequestBody(JSON_MEDIA_TYPE))
             .build()
 
         return executeWithRetry(httpRequest, inputs.size)
@@ -134,7 +137,7 @@ class EmbeddingClient(
 
     companion object {
         private const val MAX_BATCH = 96
-        private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
+        private val JSON_MEDIA_TYPE = "application/json".toMediaType()
 
         fun defaultHttpClient(config: LlmConfig): OkHttpClient = OkHttpClient.Builder()
             .connectTimeout(Duration.ofSeconds(10))

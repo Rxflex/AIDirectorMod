@@ -369,6 +369,8 @@ class DirectorService private constructor(
             return safe
         }
 
-        const val DEFAULT_EMBED_MODEL = "nvidia/nv-embedqa-e5-v5"
+        // Symmetric model — needs no `input_type` field, so it works through
+        // any OpenAI-compatible endpoint including proxies. See aidirector.toml.
+        const val DEFAULT_EMBED_MODEL = "nvidia/nv-embed-v1"
     }
 }

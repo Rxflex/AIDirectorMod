@@ -155,13 +155,18 @@ object ConfigLoader {
         # (fast, 3B active), "meta/llama-3.3-70b-instruct" (solid, slower).
         # Avoid "openai/gpt-oss-120b" — frequently emits malformed tool-call JSON.
         model = "nvidia/nemotron-3-super-120b-a12b"
-        embed_model = "nvidia/nv-embedqa-e5-v5"
-        # Optional: route embeddings to a separate endpoint. NVIDIA's asymmetric
-        # embedding models need a non-standard `input_type` field, and some
-        # OpenAI-compatible gateways/routers silently drop it (causing HTTP 400
-        # "input_type parameter is required"). If your base_url is such a proxy,
-        # point embeddings straight at NVIDIA NIM here. Leave blank to reuse the
-        # base_url / api_key above.
+        # nv-embed-v1 is a SYMMETRIC embedding model: it needs no `input_type`
+        # field, so it works through any OpenAI-compatible endpoint, including
+        # gateways/proxies. Asymmetric models (e.g. nvidia/nv-embedqa-e5-v5)
+        # give marginally better query/passage retrieval but require the
+        # non-standard `input_type` field — only use one if your endpoint
+        # forwards that field (raw NVIDIA NIM does; many proxies drop it).
+        embed_model = "nvidia/nv-embed-v1"
+        # Optional: route embeddings to a separate endpoint. If you keep an
+        # asymmetric embed_model but your base_url is a proxy that drops the
+        # `input_type` field (HTTP 400 "input_type parameter is required"),
+        # point embeddings straight at NVIDIA NIM here. Leave blank to reuse
+        # the base_url / api_key above.
         # embed_base_url = "https://integrate.api.nvidia.com/v1"
         # embed_api_key = "nvapi-..."
         timeout_seconds = 60

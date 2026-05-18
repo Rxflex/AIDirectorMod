@@ -42,7 +42,7 @@ class Rag(
                 val vec = embeddings.embed(model, listOf(content), inputType = "passage").first()
                 facts.setEmbedding(id, vec)
             } catch (e: Exception) {
-                AIDirector.log.warn("Failed to embed fact $id: ${e.message}")
+                AIDirector.log.warn("Failed to embed fact $id: ${embedFailure(e)}")
             }
         }
         return id
@@ -66,7 +66,7 @@ class Rag(
         val vec = try {
             embeddings.embed(model, listOf(query), inputType = "query").first()
         } catch (e: Exception) {
-            AIDirector.log.warn("RAG retrieve embedding failed: ${e.message}")
+            AIDirector.log.warn("RAG retrieve embedding failed: ${embedFailure(e)}")
             return emptyList()
         }
         return facts.topKByCosine(vec, k, minSimilarity)
@@ -89,10 +89,26 @@ class Rag(
             }
             return pending.size
         } catch (e: Exception) {
-            AIDirector.log.warn("Backfill failed: ${e.message}")
+            AIDirector.log.warn("Backfill failed: ${embedFailure(e)}")
             return 0
         } finally {
             backfillLock.unlock()
+        }
+    }
+
+    /**
+     * Turns an embedding failure into an operator-actionable message. The most
+     * common cause is a gateway dropping NVIDIA's non-standard `input_type`
+     * field for an asymmetric embed model — point that out explicitly.
+     */
+    private fun embedFailure(e: Throwable): String {
+        val base = e.message ?: e.toString()
+        return if (base.contains("input_type", ignoreCase = true)) {
+            "$base -- the embeddings endpoint dropped the required 'input_type' field. " +
+                "Fix: set llm.embed_model to a symmetric model such as nvidia/nv-embed-v1, " +
+                "or set llm.embed_base_url to a provider that forwards 'input_type'."
+        } else {
+            base
         }
     }
 

@@ -39,7 +39,7 @@ class PromptBuilderTest {
         val messages = PromptBuilder().build(input())
         assertThat(messages).hasSize(2)
         assertThat(messages[0].role).isEqualTo("system")
-        assertThat(messages[0].content).contains("AI Director", "How to think")
+        assertThat(messages[0].content).contains("AI Director", "WHEN TO ACT")
         assertThat(messages[1].role).isEqualTo("user")
         assertThat(messages[1].content).contains("alice", "night", "minecraft:overworld", "Tension")
     }

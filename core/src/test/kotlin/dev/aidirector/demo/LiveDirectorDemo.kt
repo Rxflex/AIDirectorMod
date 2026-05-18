@@ -322,7 +322,8 @@ class LiveDirectorDemo {
             ?: "nvidia/nv-embedqa-e5-v5"
         val cfg = LlmConfig(
             baseUrl = baseUrl, apiKey = key!!, model = chatModel,
-            embedModel = embedModel, timeoutSeconds = 120, maxRetries = 2,
+            embedModel = embedModel, embedBaseUrl = null, embedApiKey = null,
+            timeoutSeconds = 120, maxRetries = 2,
             temperature = 0.7, maxTokens = 700,
         )
 

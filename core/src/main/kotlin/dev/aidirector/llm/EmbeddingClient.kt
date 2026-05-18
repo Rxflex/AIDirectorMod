@@ -29,7 +29,12 @@ class EmbeddingClient(
     private val config: LlmConfig,
     private val httpClient: OkHttpClient = defaultHttpClient(config),
 ) : Embedder {
-    private val baseUrl = config.baseUrl.trimEnd('/')
+    // Embeddings may be routed to a different endpoint than chat — some
+    // OpenAI-compatible gateways drop the non-standard `input_type` field that
+    // NVIDIA's asymmetric embedding models require, so the operator can point
+    // embeddings straight at a provider that honours it.
+    private val baseUrl = config.effectiveEmbedBaseUrl.trimEnd('/')
+    private val apiKey = config.effectiveEmbedApiKey
 
     /** Returns one embedding per input string, in the input's order. */
     override suspend fun embed(model: String, inputs: List<String>, inputType: String): List<FloatArray> {
@@ -39,7 +44,7 @@ class EmbeddingClient(
         val req = EmbeddingRequest(model = model, input = inputs, inputType = inputType)
         val httpRequest = Request.Builder()
             .url("$baseUrl/embeddings")
-            .header("Authorization", "Bearer ${config.apiKey}")
+            .header("Authorization", "Bearer $apiKey")
             .header("Accept", "application/json")
             .header("User-Agent", "AIDirector/${AIDirector.VERSION}")
             .post(DirectorJson.encodeToString(req).toRequestBody(JSON_MEDIA_TYPE))

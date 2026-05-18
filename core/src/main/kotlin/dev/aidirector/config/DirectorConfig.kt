@@ -21,11 +21,21 @@ data class LlmConfig(
     val apiKey: String,
     val model: String,
     val embedModel: String?,
+    /** Optional separate endpoint for embeddings. Falls back to [baseUrl] when null. */
+    val embedBaseUrl: String?,
+    /** Optional separate key for the embeddings endpoint. Falls back to [apiKey] when null. */
+    val embedApiKey: String?,
     val timeoutSeconds: Long,
     val maxRetries: Int,
     val temperature: Double,
     val maxTokens: Int,
 ) {
+    /** Endpoint actually used for `/embeddings` — the dedicated one if set. */
+    val effectiveEmbedBaseUrl: String get() = embedBaseUrl?.takeIf { it.isNotBlank() } ?: baseUrl
+
+    /** Key actually used for `/embeddings` — the dedicated one if set. */
+    val effectiveEmbedApiKey: String get() = embedApiKey?.takeIf { it.isNotBlank() } ?: apiKey
+
     init {
         require(baseUrl.isNotBlank()) { "llm.base_url must not be blank" }
         require(timeoutSeconds in 1..600) { "llm.timeout_seconds must be in 1..600" }
@@ -42,6 +52,8 @@ data class DirectorRuntimeConfig(
     val enabled: Boolean,
     val systemPromptOverride: String?,
     val minSecondsBetweenLlmCalls: Long,
+    /** Throttle floor while the player is under high tension — lets the director act sooner. */
+    val minSecondsBetweenLlmCallsTense: Long,
     val reflectionIntervalMs: Long,
     val ragEnabled: Boolean,
     val ragMaxRetrieved: Int,
@@ -65,6 +77,9 @@ data class DirectorRuntimeConfig(
         require(maxToolCallsPerIteration in 1..10) { "director.max_tool_calls_per_iteration must be in 1..10" }
         require(maxAgentIterations in 1..8) { "director.max_agent_iterations must be in 1..8" }
         require(minSecondsBetweenLlmCalls >= 0) { "director.min_seconds_between_llm_calls must be >= 0" }
+        require(minSecondsBetweenLlmCallsTense >= 0) {
+            "director.min_seconds_between_llm_calls_tense must be >= 0"
+        }
         require(reflectionIntervalMs in 60_000..86_400_000) {
             "director.reflection_interval_ms must be in 60000..86400000"
         }

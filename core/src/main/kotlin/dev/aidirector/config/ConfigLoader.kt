@@ -55,6 +55,8 @@ object ConfigLoader {
                 apiKey = llmTable.requireString("api_key"),
                 model = llmTable.requireString("model"),
                 embedModel = llmTable.optionalString("embed_model"),
+                embedBaseUrl = llmTable.optionalString("embed_base_url"),
+                embedApiKey = llmTable.optionalString("embed_api_key"),
                 timeoutSeconds = llmTable.optionalLong("timeout_seconds", default = 60),
                 maxRetries = llmTable.optionalLong("max_retries", default = 3).toInt(),
                 temperature = llmTable.optionalDouble("temperature", default = 0.7),
@@ -62,11 +64,12 @@ object ConfigLoader {
             ),
             director = DirectorRuntimeConfig(
                 tickIntervalMs = directorTable.optionalLong("tick_interval_ms", default = 15_000),
-                maxToolCallsPerIteration = directorTable.optionalLong("max_tool_calls_per_iteration", default = 2).toInt(),
-                maxAgentIterations = directorTable.optionalLong("max_agent_iterations", default = 2).toInt(),
+                maxToolCallsPerIteration = directorTable.optionalLong("max_tool_calls_per_iteration", default = 5).toInt(),
+                maxAgentIterations = directorTable.optionalLong("max_agent_iterations", default = 3).toInt(),
                 enabled = directorTable.optionalBoolean("enabled", default = true),
                 systemPromptOverride = directorTable.optionalString("system_prompt"),
-                minSecondsBetweenLlmCalls = directorTable.optionalLong("min_seconds_between_llm_calls", default = 180),
+                minSecondsBetweenLlmCalls = directorTable.optionalLong("min_seconds_between_llm_calls", default = 120),
+                minSecondsBetweenLlmCallsTense = directorTable.optionalLong("min_seconds_between_llm_calls_tense", default = 45),
                 reflectionIntervalMs = directorTable.optionalLong("reflection_interval_ms", default = 600_000),
                 ragEnabled = directorTable.optionalBoolean("rag_enabled", default = true),
                 ragMaxRetrieved = directorTable.optionalLong("rag_max_retrieved", default = 4).toInt(),
@@ -86,11 +89,11 @@ object ConfigLoader {
                 directorPreset = directorTable.optionalString("director_preset") ?: "balanced",
             ),
             guardrails = GuardrailsConfig(
-                maxSpawnsPerMinute = guardrailsTable.optionalLong("max_spawns_per_minute", default = 2).toInt(),
-                maxEffectsPerMinute = guardrailsTable.optionalLong("max_effects_per_minute", default = 3).toInt(),
-                maxSoundsPerMinute = guardrailsTable.optionalLong("max_sounds_per_minute", default = 6).toInt(),
+                maxSpawnsPerMinute = guardrailsTable.optionalLong("max_spawns_per_minute", default = 5).toInt(),
+                maxEffectsPerMinute = guardrailsTable.optionalLong("max_effects_per_minute", default = 8).toInt(),
+                maxSoundsPerMinute = guardrailsTable.optionalLong("max_sounds_per_minute", default = 8).toInt(),
                 maxItemsPerMinute = guardrailsTable.optionalLong("max_items_per_minute", default = 2).toInt(),
-                maxNarrationsPerMinute = guardrailsTable.optionalLong("max_narrations_per_minute", default = 2).toInt(),
+                maxNarrationsPerMinute = guardrailsTable.optionalLong("max_narrations_per_minute", default = 4).toInt(),
                 maxWeatherPerHour = guardrailsTable.optionalLong("max_weather_per_hour", default = 2).toInt(),
                 itemRarityCap = ItemRarityCap.fromString(
                     guardrailsTable.optionalString("item_rarity_cap") ?: "rare",
@@ -144,12 +147,23 @@ object ConfigLoader {
         base_url = "https://integrate.api.nvidia.com/v1"
         # Get a key at build.nvidia.com (free tier available). NEVER commit this file.
         api_key = "PUT-YOUR-API-KEY-HERE"
-        # gpt-oss-120b: best balance of quality, RAG-awareness, and multilingual
-        # output on NIM. All NIM models are free with a 40 RPM limit — plenty for
-        # any single Minecraft server. Alternative: "meta/llama-3.3-70b-instruct"
-        # (stricter tool discipline, weaker non-English).
-        model = "openai/gpt-oss-120b"
+        # nemotron-3-super-120b-a12b: benchmarked the most reliable tool-caller
+        # on NIM (perfect tool-call JSON) and the fastest of the reliable models
+        # (~5s/call — a 120B MoE with only 12B active params). The mod is an
+        # agent loop, so tool-call reliability matters more than raw size.
+        # Alternatives that also passed: "qwen/qwen3-next-80b-a3b-instruct"
+        # (fast, 3B active), "meta/llama-3.3-70b-instruct" (solid, slower).
+        # Avoid "openai/gpt-oss-120b" — frequently emits malformed tool-call JSON.
+        model = "nvidia/nemotron-3-super-120b-a12b"
         embed_model = "nvidia/nv-embedqa-e5-v5"
+        # Optional: route embeddings to a separate endpoint. NVIDIA's asymmetric
+        # embedding models need a non-standard `input_type` field, and some
+        # OpenAI-compatible gateways/routers silently drop it (causing HTTP 400
+        # "input_type parameter is required"). If your base_url is such a proxy,
+        # point embeddings straight at NVIDIA NIM here. Leave blank to reuse the
+        # base_url / api_key above.
+        # embed_base_url = "https://integrate.api.nvidia.com/v1"
+        # embed_api_key = "nvapi-..."
         timeout_seconds = 60
         max_retries = 3
         temperature = 0.7

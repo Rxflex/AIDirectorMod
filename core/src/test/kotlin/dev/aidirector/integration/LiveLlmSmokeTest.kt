@@ -35,6 +35,8 @@ class LiveLlmSmokeTest {
         apiKey = apiKey!!,
         model = chatModel,
         embedModel = embedModel,
+        embedBaseUrl = null,
+        embedApiKey = null,
         timeoutSeconds = 60,
         maxRetries = 1,
         temperature = 0.2,

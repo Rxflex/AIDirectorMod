@@ -53,6 +53,9 @@ class Director(
     private val lastSnapshot = ConcurrentHashMap<UUID, PlayerSnapshot>()
     private val cooldownRemaining = ConcurrentHashMap<UUID, Int>()
 
+    /** Tension from the most recent evaluated tick — drives the adaptive throttle. */
+    private val lastTension = ConcurrentHashMap<UUID, Double>()
+
     @Volatile
     var paused: Boolean = false
 
@@ -80,8 +83,19 @@ class Director(
         val now = clock.nowMs()
         if (!ignoreThrottle) {
             val last = lastCallAtMs[playerUuid] ?: 0L
-            val minInterval = cfg.director.minSecondsBetweenLlmCalls * 1000
-            if (now - last < minInterval) return TickReport(playerUuid, SkipReason.THROTTLED)
+            // Adaptive throttle: when the previous tick saw high tension, the
+            // director is allowed back in sooner — pressure should be answered
+            // promptly, calm moments left alone.
+            val tense = (lastTension[playerUuid] ?: 0.0) >= TENSION_HIGH
+            // The tense floor is clamped to the calm floor — it only ever
+            // shortens the wait, never lengthens it.
+            val floorSeconds =
+                if (tense) {
+                    minOf(cfg.director.minSecondsBetweenLlmCallsTense, cfg.director.minSecondsBetweenLlmCalls)
+                } else {
+                    cfg.director.minSecondsBetweenLlmCalls
+                }
+            if (now - last < floorSeconds * 1000) return TickReport(playerUuid, SkipReason.THROTTLED)
         }
 
         val snapshot = sensors.snapshot(playerUuid)
@@ -116,6 +130,7 @@ class Director(
         lastSnapshot[playerUuid] = snapshot
 
         val tension = TensionCurve.compute(snapshot, recentlyTookDamage(playerUuid, now))
+        lastTension[playerUuid] = tension
         val recent = memory.events.recent(playerUuid, cfg.director.recentEventsShown)
         val activeNpcs = memory.npcs.rosterForPlayer(playerUuid, limit = MAX_NPCS_IN_PROMPT)
         val activeQuests = memory.quests.activeForPlayer(playerUuid, limit = MAX_QUESTS_IN_PROMPT)
@@ -240,5 +255,8 @@ class Director(
     companion object {
         private const val MAX_NPCS_IN_PROMPT = 12
         private const val MAX_QUESTS_IN_PROMPT = 12
+
+        /** Tension at or above this counts as "high" — matches the system prompt. */
+        private const val TENSION_HIGH = 0.55
     }
 }

@@ -104,13 +104,30 @@ class AgentLoop(
                 break
             }
             val assistant = choice.message
-            messages += assistant
             finalText = assistant.content
 
+            // Some models occasionally emit a tool call with a blank function
+            // name. Echoing that name back in the role:"tool" reply makes a
+            // strict gateway reject the whole request (e.g. Gemini's
+            // "function_response.name: Name cannot be empty"). Drop the
+            // malformed calls before they ever enter the conversation.
             val rawCalls = assistant.toolCalls.orEmpty()
-            if (rawCalls.isEmpty()) break
+            val validCalls = rawCalls.filter { it.function.name.isNotBlank() }
+            if (validCalls.size != rawCalls.size) {
+                AIDirector.log.warn(
+                    "Dropped {} tool call(s) with a blank function name on iter={}",
+                    rawCalls.size - validCalls.size, iter,
+                )
+            }
+            messages += if (validCalls.size == rawCalls.size) {
+                assistant
+            } else {
+                assistant.copy(toolCalls = validCalls.ifEmpty { null })
+            }
 
-            val callsThisIter = rawCalls.take(maxToolCallsPerIteration)
+            if (validCalls.isEmpty()) break
+
+            val callsThisIter = validCalls.take(maxToolCallsPerIteration)
             for (call in callsThisIter) {
                 attempted++
                 val result = dispatch(playerUuid, nowMs, call)

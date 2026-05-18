@@ -49,6 +49,7 @@ import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.entity.LightningBolt
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.Mob
+import net.minecraft.world.entity.ai.attributes.Attributes
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
 import net.minecraft.world.item.component.WrittenBookContent
@@ -788,6 +789,78 @@ class CommonServerActions(
             }
         }.toTypedArray()
         return ctor.newInstance(*args)
+    }
+
+    // ---- Mob modifiers --------------------------------------------------
+
+    override fun modifyMob(
+        entityUuid: UUID,
+        mods: dev.aidirector.actions.MobModifiers,
+    ): ActionOutcome {
+        val server = server() ?: return ActionOutcome.Failure("Server unavailable")
+        val entity = entityByUuid(entityUuid) ?: return ActionOutcome.Failure("Entity not found")
+        val effectHolder = mods.effectId?.let { id ->
+            ResourceLocation.tryParse(id)
+                ?.let { BuiltInRegistries.MOB_EFFECT.getOptional(it).orElse(null) }
+                ?.let { BuiltInRegistries.MOB_EFFECT.wrapAsHolder(it) }
+        }
+        if (mods.effectId != null && effectHolder == null) {
+            return ActionOutcome.Failure("Effect '${mods.effectId}' not registered")
+        }
+        server.execute {
+            mods.glowing?.let { entity.setGlowingTag(it) }
+            mods.silent?.let { entity.isSilent = it }
+            mods.noGravity?.let { entity.isNoGravity = it }
+            mods.customName?.let {
+                entity.customName = Component.literal(it.take(48))
+                entity.isCustomNameVisible = true
+            }
+            if (entity is LivingEntity) {
+                mods.scale?.let { s ->
+                    entity.getAttribute(Attributes.SCALE)?.baseValue = s.coerceIn(0.25, 4.0)
+                }
+                mods.speedMultiplier?.let { m ->
+                    entity.getAttribute(Attributes.MOVEMENT_SPEED)?.let { attr ->
+                        attr.baseValue = attr.baseValue * m.coerceIn(0.25, 4.0)
+                    }
+                }
+                if (effectHolder != null) {
+                    entity.addEffect(
+                        MobEffectInstance(
+                            effectHolder,
+                            mods.effectDurationTicks.coerceIn(20, 12_000),
+                            mods.effectAmplifier.coerceIn(0, 4),
+                            /* ambient = */ false,
+                            /* visible = */ true,
+                            /* showIcon = */ true,
+                        ),
+                    )
+                }
+            }
+        }
+        return ActionOutcome.Success("Modified mob $entityUuid")
+    }
+
+    // ---- Scene dressing -------------------------------------------------
+
+    override fun placeDecoration(
+        dimensionId: String,
+        blocks: List<dev.aidirector.actions.PlacedBlock>,
+    ): ActionOutcome {
+        val level = levelOf(dimensionId) ?: return ActionOutcome.Failure("Dimension '$dimensionId' not loaded")
+        val server = server() ?: return ActionOutcome.Failure("Server unavailable")
+        if (blocks.isEmpty()) return ActionOutcome.Failure("No blocks to place")
+        server.execute {
+            for (pb in blocks) {
+                val rl = ResourceLocation.tryParse(pb.blockId) ?: continue
+                val block = BuiltInRegistries.BLOCK.getOptional(rl).orElse(null) ?: continue
+                val pos = BlockPos(pb.x, pb.y, pb.z)
+                // Non-destructive: only ever fill genuinely empty space.
+                if (!level.getBlockState(pos).isAir) continue
+                level.setBlock(pos, block.defaultBlockState(), 3)
+            }
+        }
+        return ActionOutcome.Success("Placed up to ${blocks.size} decoration(s) into empty space")
     }
 
     // ---- Registry checks -----------------------------------------------

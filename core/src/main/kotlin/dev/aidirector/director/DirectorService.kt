@@ -19,12 +19,14 @@ import dev.aidirector.tools.impl.AssignQuestTool
 import dev.aidirector.tools.impl.BuildStructureTool
 import dev.aidirector.tools.impl.CompleteQuestTool
 import dev.aidirector.tools.impl.CreateBossBarTool
+import dev.aidirector.tools.impl.DressSceneTool
 import dev.aidirector.tools.impl.EvolveNpcTool
 import dev.aidirector.tools.impl.GiveBookTool
 import dev.aidirector.tools.impl.GiveItemTool
 import dev.aidirector.tools.impl.GiveTreasureMapTool
 import dev.aidirector.tools.impl.GrantAdvancementTool
 import dev.aidirector.tools.impl.KillMobTool
+import dev.aidirector.tools.impl.ModifyMobTool
 import dev.aidirector.tools.impl.ModifyWeatherTool
 import dev.aidirector.tools.impl.PhantomJoinTool
 import dev.aidirector.tools.impl.PhantomLeaveTool
@@ -331,6 +333,7 @@ class DirectorService private constructor(
                 SpawnMobTool(),
                 SetMobEquipmentTool(),
                 SetMobTargetTool(),
+                ModifyMobTool(),
                 KillMobTool(),
                 SpawnParticleTool(),
                 StrikeLightningTool(),
@@ -348,6 +351,9 @@ class DirectorService private constructor(
                 // destructive-tools opt-in.
                 PlaceSignTool(),
                 BuildStructureTool(),
+                // Atmospheric block placement — only ever fills air, so safe
+                // outside the destructive opt-in.
+                DressSceneTool(),
                 // Phantom player — tab-list + chat presence, no world entity.
                 PhantomJoinTool(),
                 PhantomSayTool(),

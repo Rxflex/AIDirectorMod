@@ -48,6 +48,8 @@ class FakeServerActions(
         data class PhantomJoin(val name: String) : Call
         data class PhantomSay(val name: String, val message: String) : Call
         data class PhantomLeave(val name: String) : Call
+        data class MobModify(val entityUuid: UUID) : Call
+        data class Decoration(val dimensionId: String, val blockCount: Int) : Call
     }
 
     override fun isPlayerOnline(playerUuid: UUID): Boolean = true
@@ -198,6 +200,19 @@ class FakeServerActions(
 
     override fun phantomLeave(phantomUuid: UUID, name: String): ActionOutcome {
         calls += Call.PhantomLeave(name)
+        return ActionOutcome.Success("ok")
+    }
+
+    override fun modifyMob(entityUuid: UUID, mods: dev.aidirector.actions.MobModifiers): ActionOutcome {
+        calls += Call.MobModify(entityUuid)
+        return ActionOutcome.Success("ok")
+    }
+
+    override fun placeDecoration(
+        dimensionId: String,
+        blocks: List<dev.aidirector.actions.PlacedBlock>,
+    ): ActionOutcome {
+        calls += Call.Decoration(dimensionId, blocks.size)
         return ActionOutcome.Success("ok")
     }
 

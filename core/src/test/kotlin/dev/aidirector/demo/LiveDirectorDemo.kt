@@ -568,6 +568,19 @@ private class PermissiveActions : ServerActions {
         return ActionOutcome.Success("ok")
     }
 
+    override fun modifyMob(entityUuid: UUID, mods: dev.aidirector.actions.MobModifiers): ActionOutcome {
+        calls += "modify_mob: $entityUuid"
+        return ActionOutcome.Success("ok")
+    }
+
+    override fun placeDecoration(
+        dimensionId: String,
+        blocks: List<dev.aidirector.actions.PlacedBlock>,
+    ): ActionOutcome {
+        calls += "place_decoration: ${blocks.size}"
+        return ActionOutcome.Success("ok")
+    }
+
     override fun isItemRegistered(itemId: String) = itemId.startsWith("minecraft:")
     override fun isSoundRegistered(soundId: String) = soundId.startsWith("minecraft:")
     override fun isEffectRegistered(effectId: String) = effectId.startsWith("minecraft:")

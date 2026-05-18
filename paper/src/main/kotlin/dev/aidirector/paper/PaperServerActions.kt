@@ -482,6 +482,70 @@ class PaperServerActions(private val plugin: JavaPlugin) : ServerActions {
         return ActionOutcome.Success("Phantom '$name' left")
     }
 
+    // ----- Mob modifiers -----
+
+    override fun modifyMob(
+        entityUuid: UUID,
+        mods: dev.aidirector.actions.MobModifiers,
+    ): ActionOutcome {
+        val entity = server.getEntity(entityUuid) ?: return ActionOutcome.Failure("Entity not found")
+        val effectType = mods.effectId?.let { potionEffectFromId(it) }
+        if (mods.effectId != null && effectType == null) {
+            return ActionOutcome.Failure("Effect '${mods.effectId}' not registered")
+        }
+        runSync {
+            mods.glowing?.let { entity.isGlowing = it }
+            mods.silent?.let { entity.isSilent = it }
+            mods.noGravity?.let { entity.setGravity(!it) }
+            mods.customName?.let {
+                entity.customName(Component.text(it.take(48)))
+                entity.isCustomNameVisible = true
+            }
+            if (entity is LivingEntity) {
+                mods.scale?.let { s ->
+                    entity.getAttribute(org.bukkit.attribute.Attribute.GENERIC_SCALE)
+                        ?.baseValue = s.coerceIn(0.25, 4.0)
+                }
+                mods.speedMultiplier?.let { m ->
+                    entity.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MOVEMENT_SPEED)
+                        ?.let { attr -> attr.baseValue = attr.baseValue * m.coerceIn(0.25, 4.0) }
+                }
+                if (effectType != null) {
+                    entity.addPotionEffect(
+                        PotionEffect(
+                            effectType,
+                            mods.effectDurationTicks.coerceIn(20, 12_000),
+                            mods.effectAmplifier.coerceIn(0, 4),
+                            false, true, true,
+                        ),
+                    )
+                }
+            }
+        }
+        return ActionOutcome.Success("Modified mob")
+    }
+
+    // ----- Scene dressing -----
+
+    override fun placeDecoration(
+        dimensionId: String,
+        blocks: List<dev.aidirector.actions.PlacedBlock>,
+    ): ActionOutcome {
+        val world = world(dimensionId) ?: return ActionOutcome.Failure("Dimension not loaded")
+        if (blocks.isEmpty()) return ActionOutcome.Failure("No blocks to place")
+        runSync {
+            for (pb in blocks) {
+                val mat = materialFromId(pb.blockId) ?: continue
+                if (!mat.isBlock) continue
+                val block = world.getBlockAt(pb.x, pb.y, pb.z)
+                // Non-destructive: only fill empty space.
+                if (!block.isEmpty) continue
+                block.type = mat
+            }
+        }
+        return ActionOutcome.Success("Placed up to ${blocks.size} decoration(s) into empty space")
+    }
+
     // ----- Registry checks via Bukkit/Material -----
 
     override fun isItemRegistered(itemId: String): Boolean = materialFromId(itemId) != null

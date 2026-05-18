@@ -123,6 +123,24 @@ interface ServerActions {
     fun setMobTarget(entityUuid: UUID, targetPlayer: UUID): ActionOutcome
     fun killEntity(entityUuid: UUID): ActionOutcome
 
+    /**
+     * Applies a curated set of modifiers to a tracked mob — glow, scale,
+     * movement speed, silence, gravity, name, and an optional status effect.
+     * Only the fields set on [mods] are changed. A safe, structured subset of
+     * "edit the mob's NBT" — no raw tag merging.
+     */
+    fun modifyMob(entityUuid: UUID, mods: MobModifiers): ActionOutcome
+
+    // ---- Scene dressing -------------------------------------------------
+
+    /**
+     * Places decorative, atmospheric blocks — but ONLY into air, never
+     * overwriting existing blocks. Non-destructive by construction, so it is
+     * available without the destructive-tools opt-in. Occupied targets and
+     * non-decorative blocks are skipped.
+     */
+    fun placeDecoration(dimensionId: String, blocks: List<PlacedBlock>): ActionOutcome
+
     // ---- Phantom player -------------------------------------------------
     // A fake player that exists only in the tab list and chat — no entity in
     // the world. Server-side; clients install nothing. Built for horror.
@@ -148,6 +166,25 @@ interface ServerActions {
 
 /** One absolute-coordinate block placement for [ServerActions.buildStructure]. */
 data class PlacedBlock(val x: Int, val y: Int, val z: Int, val blockId: String)
+
+/**
+ * Curated, structured modifiers for [ServerActions.modifyMob]. Every field is
+ * optional — only the ones set are applied.
+ */
+data class MobModifiers(
+    val glowing: Boolean? = null,
+    /** Body scale, clamped to a sane range by the implementation. */
+    val scale: Double? = null,
+    /** Movement-speed multiplier over the mob's base speed. */
+    val speedMultiplier: Double? = null,
+    val silent: Boolean? = null,
+    val noGravity: Boolean? = null,
+    val customName: String? = null,
+    /** Optional status effect applied to the mob. */
+    val effectId: String? = null,
+    val effectDurationTicks: Int = 0,
+    val effectAmplifier: Int = 0,
+)
 
 enum class NarrationStyle { NARRATOR, WHISPER, ANNOUNCEMENT, SUBTITLE }
 

@@ -24,6 +24,9 @@ class NarrationDedup(
 
     private val perPlayer = ConcurrentHashMap<UUID, ArrayDeque<Entry>>()
 
+    /** Recently played sound ids per player — see [checkSound]. */
+    private val soundsPerPlayer = ConcurrentHashMap<UUID, ArrayDeque<Pair<String, Long>>>()
+
     /**
      * Returns [Result.Fresh] and records the text if it is sufficiently new
      * compared to recent entries; returns [Result.TooSimilar] without
@@ -53,9 +56,34 @@ class NarrationDedup(
         return Result.Fresh
     }
 
+    /**
+     * Rejects a sound id the director already played for this player within
+     * [SOUND_WINDOW_MS]. The director tends to settle on one dramatic sound
+     * (a trident thunderclap) and replay it after every action, which turns
+     * an unpredictable AI into a predictable tell. Exact-id match — varying a
+     * sound means a genuinely different sound, not the same one again.
+     */
+    fun checkSound(playerUuid: UUID, soundId: String, nowMs: Long): Result {
+        val id = soundId.trim().lowercase()
+        if (id.isEmpty()) return Result.Fresh
+        val deque = soundsPerPlayer.computeIfAbsent(playerUuid) { ArrayDeque() }
+        synchronized(deque) {
+            while (deque.peekFirst()?.let { nowMs - it.second > SOUND_WINDOW_MS } == true) {
+                deque.pollFirst()
+            }
+            deque.firstOrNull { it.first == id }?.let {
+                return Result.TooSimilar(it.first, 1.0, nowMs - it.second)
+            }
+            deque.addLast(id to nowMs)
+            while (deque.size > MAX_SOUNDS_PER_PLAYER) deque.pollFirst()
+        }
+        return Result.Fresh
+    }
+
     /** Test-only. */
     internal fun reset() {
         perPlayer.clear()
+        soundsPerPlayer.clear()
     }
 
     private fun trigrams(text: String): Set<String> {
@@ -83,5 +111,11 @@ class NarrationDedup(
     sealed interface Result {
         data object Fresh : Result
         data class TooSimilar(val previousText: String, val similarity: Double, val sinceMs: Long) : Result
+    }
+
+    companion object {
+        /** A sound may not repeat for the same player within this window. */
+        private const val SOUND_WINDOW_MS = 6 * 60_000L
+        private const val MAX_SOUNDS_PER_PLAYER = 16
     }
 }

@@ -40,6 +40,15 @@ class PlaySoundTool : Tool<PlaySoundTool.Args>() {
         if (!actions.isSoundRegistered(args.soundId)) {
             return ToolResult.Refused("Sound '${args.soundId}' is not registered in this server")
         }
+        // Refuse a sound already played for this player recently — stops the
+        // director from settling on one sound as a predictable "tell".
+        val dedup = ctx.narrationDedup.checkSound(ctx.playerUuid, args.soundId, ctx.nowMs)
+        if (dedup is dev.aidirector.dedup.NarrationDedup.Result.TooSimilar) {
+            return ToolResult.Refused(
+                "Sound '${args.soundId}' was already played ${dedup.sinceMs / 1000}s ago — " +
+                    "pick a different sound; do not reuse one as a routine cue.",
+            )
+        }
         val volume = args.volume?.toFloat()?.coerceIn(0f, 2f) ?: 1f
         val pitch = args.pitch?.toFloat()?.coerceIn(0.5f, 2f) ?: 1f
         return actions.playSound(ctx.playerUuid, args.soundId, volume, pitch).toToolResult()

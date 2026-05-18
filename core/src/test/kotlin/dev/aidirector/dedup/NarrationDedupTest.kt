@@ -56,6 +56,31 @@ class NarrationDedupTest {
     }
 
     @Test
+    fun `first sound is fresh, an immediate repeat is refused`() {
+        val d = NarrationDedup()
+        assertThat(d.checkSound(player, "minecraft:item.trident.thunder", 0L))
+            .isEqualTo(NarrationDedup.Result.Fresh)
+        assertThat(d.checkSound(player, "minecraft:item.trident.thunder", 5_000L))
+            .isInstanceOf(NarrationDedup.Result.TooSimilar::class.java)
+    }
+
+    @Test
+    fun `a different sound is fresh`() {
+        val d = NarrationDedup()
+        d.checkSound(player, "minecraft:item.trident.thunder", 0L)
+        assertThat(d.checkSound(player, "minecraft:entity.wolf.howl", 5_000L))
+            .isEqualTo(NarrationDedup.Result.Fresh)
+    }
+
+    @Test
+    fun `a sound may repeat once the window has passed`() {
+        val d = NarrationDedup()
+        d.checkSound(player, "minecraft:item.trident.thunder", 0L)
+        assertThat(d.checkSound(player, "minecraft:item.trident.thunder", 7 * 60_000L))
+            .isEqualTo(NarrationDedup.Result.Fresh)
+    }
+
+    @Test
     fun `different players don't collide`() {
         val d = NarrationDedup()
         val a = UUID.randomUUID()

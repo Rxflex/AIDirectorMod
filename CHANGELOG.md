@@ -6,6 +6,51 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-05-18
+
+A feedback-driven expansion: the director acts boldly and builds whole
+scenes instead of lone lines, and gains genuinely new powers — phantom
+players, mob re-shaping, atmospheric dressing, and themed loot.
+
+### Added
+
+- **Phantom players.** `phantom_join` / `phantom_say` / `phantom_leave` —
+  a fake player joins the server with a believable join message, speaks in
+  chat, and leaves, with no entity in the world. A purely server-side scare.
+- **`modify_mob`.** Re-shapes a tracked mob via a curated set of modifiers —
+  glow, body scale, movement speed, silence, gravity, name, and an optional
+  status effect on the mob itself.
+- **`dress_scene`.** Places atmospheric blocks (cobweb, vine, soul torch,
+  candle, ...) but only ever into empty air, so it can never damage the
+  player's builds — available without the destructive-tools opt-in.
+- **`give_loot` and a bundled loot pack.** Four themed loot tables shipped as
+  JSON in the jar; the director hands the player a varied, weighted bundle
+  instead of single items.
+- **Adaptive pacing.** Under high tension the director may act again after a
+  shorter throttle floor, so pressure is answered promptly and calm moments
+  are left alone.
+
+### Changed
+
+- **System prompt rewritten.** The director is told it controls a live
+  Minecraft world and must build coordinated multi-tool SCENES (effects,
+  mobs, weather, sound together), not lone narration lines; varying its
+  mechanics across ticks is now mandatory.
+- Up to 5 tool calls per iteration (was 2); guardrail caps raised so a bold
+  scene is not clipped.
+- Default chat model is now `nvidia/nemotron-3-super-120b-a12b` —
+  benchmarked the most reliable tool-caller on NIM and the fastest of the
+  reliable models. `openai/gpt-oss-120b` frequently emitted malformed
+  tool-call JSON.
+- Embeddings may be routed to a dedicated endpoint (`embed_base_url` /
+  `embed_api_key`) for gateways that drop NVIDIA's `input_type` field.
+
+### Fixed
+
+- Tool calls with a blank function name are dropped before they enter the
+  conversation — echoing the empty name made strict gateways reject the
+  whole request.
+
 ## [0.3.0] - 2026-05-18
 
 The director gains intent and a longer memory: a planned story, NPCs with

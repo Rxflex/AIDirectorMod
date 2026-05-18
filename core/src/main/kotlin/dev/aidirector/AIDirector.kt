@@ -10,6 +10,6 @@ import org.slf4j.LoggerFactory
  */
 object AIDirector {
     const val MOD_ID = "aidirector"
-    const val VERSION = "0.3.0"
+    const val VERSION = "0.4.0"
     val log: Logger = LoggerFactory.getLogger("AIDirector")
 }

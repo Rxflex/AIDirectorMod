@@ -6,6 +6,22 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.6] - 2026-05-18
+
+### Added
+
+- **Debug logging.** `director.debug_logging` (default off): every tick
+  logs one line with its decision — acted, with the tool tally, or the
+  reason it was skipped (`THROTTLED`, `NO_SIGNIFICANT_CHANGE`,
+  `COOLDOWN`, ...). The agent loop additionally logs each iteration's
+  tool calls and their results. Makes it clear why the director is quiet.
+
+### Changed
+
+- Default `llm.timeout_seconds` raised to 240. A provider holds the HTTP
+  response until prefill finishes, and for the director's large prompt
+  on a busy free endpoint that alone can exceed two minutes.
+
 ## [0.4.5] - 2026-05-18
 
 ### Added

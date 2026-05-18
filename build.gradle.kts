@@ -63,7 +63,7 @@ subprojects {
         apply(plugin = "architectury-plugin")
 
         // Stamp the Minecraft version into the jar name so a release artifact
-        // is unambiguous, e.g. aidirector-neoforge-mc1.21.4-0.4.5.jar.
+        // is unambiguous, e.g. aidirector-neoforge-mc1.21.4-0.4.6.jar.
         val mcVersion = project.property("minecraft_version") as String
         the<org.gradle.api.plugins.BasePluginExtension>().archivesName.set("$mod_id-${project.name}-mc$mcVersion")
         the<org.gradle.api.plugins.JavaPluginExtension>().apply {

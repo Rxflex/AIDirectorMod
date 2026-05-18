@@ -92,18 +92,24 @@ class Chronicle(
     fun deliverPendingForPlayer(playerUuid: UUID): Int {
         val cfg = configService.current
         if (!cfg.director.chronicleEnabled) return 0
-        val pending = memory.chronicle.undelivered(playerUuid, limit = MAX_BOOK_PAGES)
+        val pending = memory.chronicle.undelivered(playerUuid, limit = MAX_BOOK_ENTRIES)
         if (pending.isEmpty()) return 0
         if (!actions.isPlayerOnline(playerUuid)) return 0
 
-        val pages = pending.map { e ->
-            ("« ${e.title} »\n\n${e.body}").take(MAX_PAGE_CHARS)
+        // A Minecraft written-book page does not scroll — text past its ~13
+        // lines is simply lost. Paginate each entry ourselves; every entry
+        // starts on a fresh page.
+        val pages = ArrayList<String>()
+        for (entry in pending) {
+            if (pages.size >= MAX_BOOK_PAGES) break
+            pages += paginate("« ${entry.title} »\n\n${entry.body}")
         }
+        val bookPages = pages.take(MAX_BOOK_PAGES)
         val outcome = actions.giveBook(
             playerUuid = playerUuid,
             title = "The Chronicle",
             author = "an unseen hand",
-            pages = pages,
+            pages = bookPages,
         )
         if (!outcome.ok) {
             AIDirector.log.warn("Chronicle delivery failed: ${outcome.message}")
@@ -224,6 +230,47 @@ class Chronicle(
         }
     }
 
+    /**
+     * Splits text into Minecraft written-book pages. A book page does not
+     * scroll, so each page is word-wrapped to a conservative width and capped
+     * to a line count that always fits the visible area.
+     */
+    private fun paginate(text: String): List<String> {
+        val pages = ArrayList<String>()
+        val pageLines = ArrayList<String>()
+
+        fun flush() {
+            if (pageLines.isNotEmpty()) {
+                pages += pageLines.joinToString("\n")
+                pageLines.clear()
+            }
+        }
+        fun addLine(line: String) {
+            if (pageLines.size >= PAGE_LINES) flush()
+            pageLines += line
+        }
+
+        for (rawLine in text.split("\n")) {
+            if (rawLine.isBlank()) {
+                addLine("")
+                continue
+            }
+            var current = StringBuilder()
+            for (word in rawLine.split(" ").filter { it.isNotEmpty() }) {
+                val candidate = if (current.isEmpty()) word else "$current $word"
+                if (candidate.length > PAGE_LINE_WIDTH && current.isNotEmpty()) {
+                    addLine(current.toString())
+                    current = StringBuilder(word)
+                } else {
+                    current = StringBuilder(candidate)
+                }
+            }
+            if (current.isNotEmpty()) addLine(current.toString())
+        }
+        flush()
+        return pages.ifEmpty { listOf(text) }
+    }
+
     private fun extractPlayerName(session: List<EventRecord>): String? {
         for (e in session) {
             val obj = runCatching { DirectorJson.decodeFromString<JsonObject>(e.payloadJson) }.getOrNull() ?: continue
@@ -249,8 +296,14 @@ class Chronicle(
         private const val MIN_ENTRY_CHARS = 40
         private const val MAX_TITLE_CHARS = 60
         private const val MAX_BODY_CHARS = 900
-        private const val MAX_BOOK_PAGES = 14
-        private const val MAX_PAGE_CHARS = 900
+        /** Undelivered entries pulled into one book. */
+        private const val MAX_BOOK_ENTRIES = 12
+        /** Hard cap on total pages (a written book holds 100). */
+        private const val MAX_BOOK_PAGES = 50
+        /** Word-wrap width and line count for a single book page — kept well
+         *  inside what the non-scrolling page area actually shows. */
+        private const val PAGE_LINE_WIDTH = 19
+        private const val PAGE_LINES = 13
         private const val DEFAULT_TITLE = "An Unmarked Day"
 
         /** Event kinds worth narrating — the rest (raw snapshots, block breaks) is noise. */

@@ -296,8 +296,9 @@ class PromptBuilder(
             6. Example horror scene (ONE beat, ONE tick): spawn a fast
                skeleton five blocks behind the player, aim it at them, apply
                darkness for 5s and slowness so they cannot cleanly flee, play
-               a distant scream, and send_narration one whispered line. Five
-               tool calls, one moment.
+               a distant scream, and send_narration one whispered line. Six
+               tool calls, one moment. ALWAYS include the send_narration call
+               that frames a scene — never let it be the move you drop.
 
             TENSION
             7. HIGH tension (score >= 0.55): the player is already pressured -

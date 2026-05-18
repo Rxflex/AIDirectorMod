@@ -64,7 +64,7 @@ object ConfigLoader {
             ),
             director = DirectorRuntimeConfig(
                 tickIntervalMs = directorTable.optionalLong("tick_interval_ms", default = 15_000),
-                maxToolCallsPerIteration = directorTable.optionalLong("max_tool_calls_per_iteration", default = 5).toInt(),
+                maxToolCallsPerIteration = directorTable.optionalLong("max_tool_calls_per_iteration", default = 8).toInt(),
                 maxAgentIterations = directorTable.optionalLong("max_agent_iterations", default = 3).toInt(),
                 enabled = directorTable.optionalBoolean("enabled", default = true),
                 systemPromptOverride = directorTable.optionalString("system_prompt"),

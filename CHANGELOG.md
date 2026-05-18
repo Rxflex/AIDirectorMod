@@ -6,6 +6,18 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-05-18
+
+### Fixed
+
+- The director applied effects but no narration appeared in chat. A
+  coordinated scene of six tool calls — the prompt's own horror-scene
+  example — exceeded the per-iteration cap of 5, so the sixth call,
+  typically `send_narration`, was silently dropped. The default
+  `max_tool_calls_per_iteration` is raised to 8, and the prompt is
+  explicit that the `send_narration` call framing a scene must never be
+  the one left out.
+
 ## [0.4.2] - 2026-05-18
 
 A fix for reasoning models.

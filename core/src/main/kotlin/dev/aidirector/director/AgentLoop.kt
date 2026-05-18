@@ -107,28 +107,32 @@ class AgentLoop(
             val assistant = choice.message
             finalText = assistant.content
 
-            // Some models occasionally emit a tool call with a blank function
-            // name. Echoing that name back in the role:"tool" reply makes a
-            // strict gateway reject the whole request (e.g. Gemini's
-            // "function_response.name: Name cannot be empty"). Drop the
-            // malformed calls before they ever enter the conversation.
+            // Normalise the model's tool calls before they enter the
+            // conversation. Two things go wrong with some models / gateways:
+            //  - a tool call with a blank function name cannot be dispatched
+            //    and cannot be echoed back (a strict gateway rejects an empty
+            //    function_response.name);
+            //  - blank or duplicate tool-call ids stop a Gemini-style gateway
+            //    matching the tool result to the call, so it cannot fill in
+            //    the function_response.name either.
+            // So: drop blank-named calls, cap to the per-iteration limit, then
+            // give every survivor a unique, non-empty id. The assistant
+            // message we store lists EXACTLY the calls we answer, 1:1.
             val rawCalls = assistant.toolCalls.orEmpty()
-            val validCalls = rawCalls.filter { it.function.name.isNotBlank() }
-            if (validCalls.size != rawCalls.size) {
+            val named = rawCalls.filter { it.function.name.isNotBlank() }
+            if (named.size != rawCalls.size) {
                 AIDirector.log.warn(
                     "Dropped {} tool call(s) with a blank function name on iter={}",
-                    rawCalls.size - validCalls.size, iter,
+                    rawCalls.size - named.size, iter,
                 )
             }
-            messages += if (validCalls.size == rawCalls.size) {
-                assistant
-            } else {
-                assistant.copy(toolCalls = validCalls.ifEmpty { null })
-            }
+            val callsThisIter = named.take(maxToolCallsPerIteration)
+                .mapIndexed { i, call -> call.copy(id = "aidir_${iter}_$i") }
 
-            if (validCalls.isEmpty()) break
+            messages += assistant.copy(toolCalls = callsThisIter.ifEmpty { null })
 
-            val callsThisIter = validCalls.take(maxToolCallsPerIteration)
+            if (callsThisIter.isEmpty()) break
+
             for (call in callsThisIter) {
                 attempted++
                 val result = dispatch(playerUuid, nowMs, call)

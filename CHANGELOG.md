@@ -6,6 +6,24 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-05-18
+
+A bug-fix release for OpenAI-compatible gateways.
+
+### Fixed
+
+- Tool calls are now given unique, non-empty ids, and the assistant
+  message lists exactly the calls that are answered (1:1). Some models
+  emit blank or duplicate tool-call ids; a Gemini-style gateway could
+  not then match a tool result to its call and rejected the request
+  with "function_response.name: Name cannot be empty".
+- The default embedding model is now `nvidia/nv-embed-v1` — a symmetric
+  model that needs no non-standard `input_type` field, so it works
+  through any OpenAI-compatible endpoint, including proxies that drop
+  that field. Asymmetric models still work when pointed at an endpoint
+  that forwards `input_type` (see `embed_base_url`). Embedding failures
+  caused by a stripped `input_type` now log an actionable hint.
+
 ## [0.4.0] - 2026-05-18
 
 A feedback-driven expansion: the director acts boldly and builds whole

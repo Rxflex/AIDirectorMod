@@ -6,6 +6,8 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-05-18
+
 The director gains intent and a longer memory: a planned story, NPCs with
 fates, a session journal, selectable personas — plus a Paper plugin and
 support for more Minecraft versions.

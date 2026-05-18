@@ -6,6 +6,29 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.5] - 2026-05-18
+
+### Added
+
+- **Streaming.** Chat completions are streamed over Server-Sent Events.
+  The response is reassembled chunk by chunk — content deltas joined,
+  tool-call deltas accumulated per index. Because data keeps flowing,
+  the total-call timeout is replaced by an idle-gap read timeout, so a
+  long reasoning generation no longer trips a deadline. A non-streaming
+  JSON response is still accepted for endpoints that ignore the flag.
+
+### Fixed
+
+- The director no longer reuses one sound as a tell. It tended to settle
+  on a single dramatic sound and replay it after every action;
+  `play_sound` now refuses a sound id already played for that player
+  within the last six minutes.
+
+### Changed
+
+- Default `timeout_seconds` raised to 120 (used on any non-streaming
+  path).
+
 ## [0.4.4] - 2026-05-18
 
 ### Fixed

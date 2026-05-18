@@ -73,6 +73,45 @@ data class ToolCallFunction(
     val arguments: String,
 )
 
+// --- streaming (Server-Sent Events) chunk types ---
+// Each `data:` line of a streamed chat completion decodes to one of these.
+
+@Serializable
+data class ChatCompletionChunk(
+    val choices: List<ChunkChoice> = emptyList(),
+    val usage: Usage? = null,
+)
+
+@Serializable
+data class ChunkChoice(
+    val index: Int = 0,
+    val delta: ChunkDelta = ChunkDelta(),
+    @SerialName("finish_reason")
+    val finishReason: String? = null,
+)
+
+@Serializable
+data class ChunkDelta(
+    val role: String? = null,
+    val content: String? = null,
+    @SerialName("tool_calls")
+    val toolCalls: List<ChunkToolCall>? = null,
+)
+
+@Serializable
+data class ChunkToolCall(
+    val index: Int = 0,
+    val id: String? = null,
+    val type: String? = null,
+    val function: ChunkFunction? = null,
+)
+
+@Serializable
+data class ChunkFunction(
+    val name: String? = null,
+    val arguments: String? = null,
+)
+
 @Serializable
 data class Usage(
     @SerialName("prompt_tokens") val promptTokens: Int = 0,

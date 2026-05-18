@@ -57,7 +57,7 @@ object ConfigLoader {
                 embedModel = llmTable.optionalString("embed_model"),
                 embedBaseUrl = llmTable.optionalString("embed_base_url"),
                 embedApiKey = llmTable.optionalString("embed_api_key"),
-                timeoutSeconds = llmTable.optionalLong("timeout_seconds", default = 60),
+                timeoutSeconds = llmTable.optionalLong("timeout_seconds", default = 120),
                 maxRetries = llmTable.optionalLong("max_retries", default = 3).toInt(),
                 temperature = llmTable.optionalDouble("temperature", default = 0.7),
                 maxTokens = llmTable.optionalLong("max_tokens", default = 8192).toInt(),
@@ -169,7 +169,9 @@ object ConfigLoader {
         # the base_url / api_key above.
         # embed_base_url = "https://integrate.api.nvidia.com/v1"
         # embed_api_key = "nvapi-..."
-        timeout_seconds = 60
+        # A reasoning model generating up to max_tokens can take a while; the
+        # request is not streamed, so this must cover the whole generation.
+        timeout_seconds = 120
         max_retries = 3
         temperature = 0.7
         # Generous by default — reasoning models spend a large part of the

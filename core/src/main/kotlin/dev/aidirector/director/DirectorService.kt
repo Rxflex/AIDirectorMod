@@ -212,15 +212,38 @@ class DirectorService private constructor(
 
     private suspend fun runOneTick(ignoreThrottle: Boolean = false): List<Director.TickReport> {
         val sensors = dev.aidirector.sensors.SensorsHolder.require()
+        val debug = configService.current.director.debugLogging
         val reports = mutableListOf<Director.TickReport>()
         for (uuid in sensors.onlinePlayers()) {
             try {
-                reports += director.tickPlayer(uuid, ignoreThrottle = ignoreThrottle)
+                val report = director.tickPlayer(uuid, ignoreThrottle = ignoreThrottle)
+                reports += report
+                if (debug) logTick(report)
             } catch (e: Exception) {
                 AIDirector.log.error("Tick failed for $uuid: ${e.message}", e)
             }
         }
         return reports
+    }
+
+    /** One readable line per tick — enabled by director.debug_logging. */
+    private fun logTick(r: Director.TickReport) {
+        val who = r.playerUuid.toString().take(8)
+        val outcome = when {
+            r.skipped != null -> "skipped — ${r.skipped}"
+            r.agentReport != null -> {
+                val a = r.agentReport!!
+                val err = a.llmError?.let { " [LLM error: $it]" } ?: ""
+                if (a.toolsAttempted == 0) {
+                    "LLM ran, no action this tick$err"
+                } else {
+                    "acted — iterations=${a.iterations}, tools ${a.toolsExecuted}/${a.toolsAttempted} ok, " +
+                        "${a.toolsRefused} refused, ${a.toolsFailed} failed$err"
+                }
+            }
+            else -> "no result"
+        }
+        AIDirector.log.info("[debug] tick player=$who: $outcome")
     }
 
     override fun close() {
@@ -270,6 +293,7 @@ class DirectorService private constructor(
                 phantoms = phantoms,
                 maxIterations = cfg.director.maxAgentIterations,
                 maxToolCallsPerIteration = cfg.director.maxToolCallsPerIteration,
+                debugLogging = cfg.director.debugLogging,
             )
             val director = Director(
                 configService = configService,

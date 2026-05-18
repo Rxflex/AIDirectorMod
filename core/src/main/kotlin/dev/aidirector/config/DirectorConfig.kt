@@ -71,6 +71,8 @@ data class DirectorRuntimeConfig(
     val campaignReviewIntervalMs: Long,
     val chronicleEnabled: Boolean,
     val directorPreset: String,
+    /** When true, every director tick logs its decision and the LLM's outcome. */
+    val debugLogging: Boolean,
 ) {
     init {
         require(tickIntervalMs in 1_000..600_000) { "director.tick_interval_ms must be in 1000..600000" }

@@ -57,7 +57,7 @@ object ConfigLoader {
                 embedModel = llmTable.optionalString("embed_model"),
                 embedBaseUrl = llmTable.optionalString("embed_base_url"),
                 embedApiKey = llmTable.optionalString("embed_api_key"),
-                timeoutSeconds = llmTable.optionalLong("timeout_seconds", default = 120),
+                timeoutSeconds = llmTable.optionalLong("timeout_seconds", default = 240),
                 maxRetries = llmTable.optionalLong("max_retries", default = 3).toInt(),
                 temperature = llmTable.optionalDouble("temperature", default = 0.7),
                 maxTokens = llmTable.optionalLong("max_tokens", default = 8192).toInt(),
@@ -87,6 +87,7 @@ object ConfigLoader {
                 campaignReviewIntervalMs = directorTable.optionalLong("campaign_review_interval_ms", default = 1_200_000),
                 chronicleEnabled = directorTable.optionalBoolean("chronicle_enabled", default = true),
                 directorPreset = directorTable.optionalString("director_preset") ?: "balanced",
+                debugLogging = directorTable.optionalBoolean("debug_logging", default = false),
             ),
             guardrails = GuardrailsConfig(
                 maxSpawnsPerMinute = guardrailsTable.optionalLong("max_spawns_per_minute", default = 5).toInt(),
@@ -169,9 +170,11 @@ object ConfigLoader {
         # the base_url / api_key above.
         # embed_base_url = "https://integrate.api.nvidia.com/v1"
         # embed_api_key = "nvapi-..."
-        # A reasoning model generating up to max_tokens can take a while; the
-        # request is not streamed, so this must cover the whole generation.
-        timeout_seconds = 120
+        # Idle/read timeout. A provider holds the HTTP response until it has
+        # finished prefill (processing the whole prompt) — for a large prompt
+        # on a busy free endpoint that alone can take 30-90s before the first
+        # byte. Keep this generous; the director's ticks are asynchronous.
+        timeout_seconds = 240
         max_retries = 3
         temperature = 0.7
         # Generous by default — reasoning models spend a large part of the
@@ -219,6 +222,10 @@ object ConfigLoader {
         #   cruel      — pressure, dread and costly choices (still fair)
         #   comforter  — warmth, support, rare frights
         director_preset = "balanced"
+        # Debug logging: when true, every tick logs its decision (acted / why it
+        # was skipped) and the LLM's outcome (tool calls, results). Use this to
+        # see why the director is quiet.
+        debug_logging = false
         # RAG: retrieve relevant lore/personality facts each tick to keep the LLM coherent.
         rag_enabled = true
         rag_max_retrieved = 4

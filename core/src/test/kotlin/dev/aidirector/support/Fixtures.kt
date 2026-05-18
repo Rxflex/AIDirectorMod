@@ -58,6 +58,7 @@ object Fixtures {
             campaignReviewIntervalMs = 1_200_000,
             chronicleEnabled = false,
             directorPreset = "balanced",
+            debugLogging = false,
         ),
         guardrails = GuardrailsConfig(
             maxSpawnsPerMinute = 2,

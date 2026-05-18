@@ -47,6 +47,7 @@ class AgentLoop(
     private val phantoms: dev.aidirector.phantom.PhantomRegistry,
     private val maxIterations: Int,
     private val maxToolCallsPerIteration: Int,
+    private val debugLogging: Boolean = false,
 ) {
     init {
         require(maxIterations in 1..8) { "maxIterations must be 1..8" }
@@ -131,11 +132,25 @@ class AgentLoop(
 
             messages += assistant.copy(toolCalls = callsThisIter.ifEmpty { null })
 
+            if (debugLogging) {
+                AIDirector.log.info(
+                    "[debug] agent iter=$iter: ${callsThisIter.size} tool call(s)" +
+                        (assistant.content?.takeIf { it.isNotBlank() }
+                            ?.let { " | text: ${it.take(160)}" } ?: ""),
+                )
+            }
+
             if (callsThisIter.isEmpty()) break
 
             for (call in callsThisIter) {
                 attempted++
                 val result = dispatch(playerUuid, nowMs, call)
+                if (debugLogging) {
+                    AIDirector.log.info(
+                        "[debug]   ${call.function.name}(${call.function.arguments.take(140)}) " +
+                            "-> ${result::class.simpleName}: ${result.message.take(140)}",
+                    )
+                }
                 when (result) {
                     is ToolResult.Success -> executed++
                     is ToolResult.Refused -> refused++

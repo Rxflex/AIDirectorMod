@@ -80,11 +80,23 @@ class LlmClient(
         val bodyText = response.body?.string().orEmpty()
         when {
             response.isSuccessful -> {
-                return try {
+                val decoded = try {
                     DirectorJson.decodeFromString<ChatResponse>(bodyText)
                 } catch (e: SerializationException) {
                     throw LlmResponseException("Failed to decode chat completion: ${e.message}", e)
                 }
+                // Strip reasoning-model chain-of-thought from message content so
+                // no `<think>`/`<thought>` block can leak into a narration, a
+                // chronicle book, or a parsed-JSON consumer.
+                return decoded.copy(
+                    choices = decoded.choices.map { choice ->
+                        choice.copy(
+                            message = choice.message.copy(
+                                content = ReasoningFilter.strip(choice.message.content),
+                            ),
+                        )
+                    },
+                )
             }
             response.code == 408 || response.code == 429 -> {
                 val retryAfter = response.header("Retry-After")?.toLongOrNull()

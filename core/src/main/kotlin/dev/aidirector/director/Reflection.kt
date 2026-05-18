@@ -117,7 +117,9 @@ class Reflection(
                 tools = null,
                 toolChoice = "none",
                 temperature = (cfg.llm.temperature - 0.1).coerceAtLeast(0.0),
-                maxTokens = 200,
+                // Generous: a reasoning model needs budget for its (stripped)
+                // chain-of-thought before the short arc summary.
+                maxTokens = cfg.llm.maxTokens,
             ),
         )
         val text = response.choices.firstOrNull()?.message?.content?.trim()

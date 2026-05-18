@@ -1,8 +1,8 @@
 name: release
 
 # Cutting a release:
-#   git tag v0.4.1
-#   git push origin v0.4.1
+#   git tag v0.4.2
+#   git push origin v0.4.2
 # This workflow then builds every loader x Minecraft-version jar and publishes
 # them on a GitHub Release named after the tag.
 

@@ -178,7 +178,7 @@ class Showrunner(
                     tools = null,
                     toolChoice = "none",
                     temperature = (cfg.llm.temperature + 0.15).coerceAtMost(2.0),
-                    maxTokens = 1_200,
+                    maxTokens = cfg.llm.maxTokens,
                 ),
             )
         } catch (e: Exception) {

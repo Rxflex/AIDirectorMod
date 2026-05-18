@@ -60,7 +60,7 @@ object ConfigLoader {
                 timeoutSeconds = llmTable.optionalLong("timeout_seconds", default = 60),
                 maxRetries = llmTable.optionalLong("max_retries", default = 3).toInt(),
                 temperature = llmTable.optionalDouble("temperature", default = 0.7),
-                maxTokens = llmTable.optionalLong("max_tokens", default = 1024).toInt(),
+                maxTokens = llmTable.optionalLong("max_tokens", default = 8192).toInt(),
             ),
             director = DirectorRuntimeConfig(
                 tickIntervalMs = directorTable.optionalLong("tick_interval_ms", default = 15_000),
@@ -172,7 +172,9 @@ object ConfigLoader {
         timeout_seconds = 60
         max_retries = 3
         temperature = 0.7
-        max_tokens = 1024
+        # Generous by default — reasoning models spend a large part of the
+        # budget on their (stripped) chain-of-thought before the real answer.
+        max_tokens = 8192
 
         [director]
         enabled = true

@@ -186,7 +186,9 @@ class Chronicle(
                 tools = null,
                 toolChoice = "none",
                 temperature = (cfg.llm.temperature + 0.1).coerceAtMost(2.0),
-                maxTokens = 320,
+                // Generous: a reasoning model spends most of the budget on its
+                // (stripped) chain-of-thought before writing the short entry.
+                maxTokens = cfg.llm.maxTokens,
             ),
         )
         val raw = response.choices.firstOrNull()?.message?.content?.trim()

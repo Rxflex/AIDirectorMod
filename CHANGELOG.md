@@ -6,6 +6,26 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-05-18
+
+A fix for reasoning models.
+
+### Fixed
+
+- Reasoning-model chain-of-thought is stripped from model output.
+  `<think>` / `<thought>` / `<reasoning>` blocks — including an
+  unclosed block left when the token budget cuts the model off
+  mid-thought — could otherwise leak verbatim into a narration or a
+  chronicle book.
+
+### Changed
+
+- Default `max_tokens` raised from 1024 to 8192. A reasoning model
+  spends much of its budget on its (now-stripped) chain-of-thought; the
+  old limit left too little for the actual answer, so the chronicle and
+  other passes produced empty or truncated output. The chronicle,
+  reflection, and campaign passes now use the full configured budget.
+
 ## [0.4.1] - 2026-05-18
 
 A bug-fix release for OpenAI-compatible gateways.
